@@ -78,6 +78,7 @@ function displayPets(list) {
                 <img src="${p.image}">
                 <h3>${p.name}</h3>
                 <p>${p.price}</p>
+                <button onclick="addToCart('${p.name}', '${p.price}')">Add to Cart</button>
             </div>
         `;
     });
@@ -91,11 +92,11 @@ function displayProducts(list) {
                 <img src="${p.image}">
                 <h3>${p.name}</h3>
                 <p>${p.price}</p>
+                <button onclick="addToCart('${p.name}', '${p.price}')">Add to Cart</button>
             </div>
         `;
     });
 }
-
 displayPets(pets);
 displayProducts(products);
 
@@ -121,3 +122,78 @@ function performSearch() {
 }
 
 searchInput.addEventListener("input", performSearch);
+
+let cart = JSON.parse(sessionStorage.getItem("cart")) || [];
+
+function addToCart(name, price) {
+    let cleanPrice = parseInt(price.replace(/[^\d]/g, ""));
+
+    let item = cart.find(i => i.name === name);
+
+    if (item) {
+        item.quantity++;
+    } else {
+        cart.push({
+            name: name,
+            price: cleanPrice,
+            quantity: 1
+        });
+    }
+
+    sessionStorage.setItem("cart", JSON.stringify(cart));
+    displayCart();
+}
+function displayCart() {
+    const cartDiv = document.getElementById("cartItems");
+    const totalDiv = document.getElementById("total");
+
+    if (!cartDiv || !totalDiv) return;
+
+    cartDiv.innerHTML = "";
+    let total = 0;
+
+    cart.forEach(item => {
+        total += item.price * item.quantity;
+
+        cartDiv.innerHTML += `
+            <div>
+                <h4>${item.name}</h4>
+                <p>₹${item.price} x ${item.quantity}</p>
+                <button onclick="increaseQty('${item.name}')">+</button>
+                <button onclick="decreaseQty('${item.name}')">-</button>
+            </div>
+        `;
+    });
+
+    totalDiv.innerText = "Total: ₹" + total;
+}
+function increaseQty(name) {
+    let item = cart.find(i => i.name === name);
+    if (item) item.quantity++;
+
+    sessionStorage.setItem("cart", JSON.stringify(cart));
+    displayCart();
+}
+function decreaseQty(name) {
+    let item = cart.find(i => i.name === name);
+    if (!item) return;
+    if (item.quantity > 1) {
+        item.quantity--;
+    } else {
+        cart = cart.filter(i => i.name !== name);
+    }
+    sessionStorage.setItem("cart", JSON.stringify(cart));
+    displayCart();
+}
+function checkout() {
+    if (cart.length === 0) {
+        alert("Cart is empty!");
+        return;
+    }
+
+    alert("Order placed successfully!");
+    cart = [];
+    sessionStorage.removeItem("cart");
+    displayCart();
+}
+displayCart();
